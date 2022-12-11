@@ -55,6 +55,7 @@ def hello_world():
 @app.route('/analyze', methods = ["GET"])
 def analyze():
   if request.method == "GET":
+    score = 10
     headers = {
       "authorization": os.getenv("AAI_API_KEY"),
     }
@@ -71,6 +72,7 @@ def analyze():
     str_mistakes = ""
     for i in range(0, len(mistakes)):
       str_mistakes += mistakes[i]['message'] + "\n"
+      score -= 0.5
     # print(str_mistakes)
     print(response)
     response = response.json()
@@ -88,17 +90,23 @@ def analyze():
         sentiment_score += 0
       else:
         sentiment_score -= 1
-      
+    score += sentiment_score/len(response['sentiment_analysis_results'])
     if sentiment_score > 0:
       senti_dict = {'sentiment': 'positive'}
     elif sentiment_score == 0:
       senti_dict = {'sentiment': 'neutral'}
     else:
       senti_dict = {'sentiment': 'negative'}
+    safety_label = ""
+    for i in range(0, len(response['content_safety_labels']['results'][0]['labels'])):
+      safety_label += response['content_safety_labels']['results'][0]['labels'][i]['label'] + "\n"
+      score -= 0.5
 
+    safety_label_dict = {"safety_labels": safety_label}
     senti_dict2 = {'individual': sentiment_individual}
     wrap_mistakes = {'mistakes': str_mistakes}
-    merged_dict = {**response, **wrap_mistakes, **senti_dict, **senti_dict2}
+    score_dict = {'score': str(score)}
+    merged_dict = {**response, **wrap_mistakes, **senti_dict, **senti_dict2, **safety_label_dict, **score_dict}
     return json.dumps(merged_dict)
 
 
