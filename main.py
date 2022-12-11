@@ -70,27 +70,36 @@ def analyze():
     mistakes = json.loads(response2.text)['matches']
     str_mistakes = ""
     for i in range(0, len(mistakes)):
-      str_mistakes += mistakes[i]['message'] + " "
+      str_mistakes += mistakes[i]['message'] + "\n"
     # print(str_mistakes)
     print(response)
     response = response.json()
+    sentiment_score = 0
+    sentiment = ""
+    senti_dict = {'sentiment': 'neutral'}
+    sentiment_individual = ""
+    for i in range(0, len(response['sentiment_analysis_results'])):
+      sentiment = response['sentiment_analysis_results'][i]['sentiment']
+      text = response['sentiment_analysis_results'][i]['text']
+      sentiment_individual += text + ":" + sentiment + "\n"
+      if sentiment == "POSITIVE":
+        sentiment_score += 1
+      elif sentiment == "NEUTRAL":
+        sentiment_score += 0
+      else:
+        sentiment_score -= 1
+      
+    if sentiment_score > 0:
+      senti_dict = {'sentiment': 'positive'}
+    elif sentiment_score == 0:
+      senti_dict = {'sentiment': 'neutral'}
+    else:
+      senti_dict = {'sentiment': 'negative'}
+
+    senti_dict2 = {'individual': sentiment_individual}
     wrap_mistakes = {'mistakes': str_mistakes}
-    merged_dict = {**response, **wrap_mistakes}
+    merged_dict = {**response, **wrap_mistakes, **senti_dict, **senti_dict2}
     return json.dumps(merged_dict)
 
-@app.route('/report', methods = ['GET'])
-def report():
-  # text = json.loads(db['response'])['text']
-  text = str(db['response']).replace(" ", "%20")
-  print(text)
-  payload = "language=en-US&text=" + text
-  response = requests.request("POST", url, data=payload, headers=headers)
-  mistakes = json.loads(response.text)['matches']
-  str_mistakes = ""
-  for i in range(0, len(mistakes)):
-    str_mistakes += mistakes[i]['message'] + " "
-  print(str_mistakes)
-  wrap_mistakes = {'mistakes': str_mistakes}
-  return json.dumps(wrap_mistakes)
 
 app.run(host='0.0.0.0', port=8080)
