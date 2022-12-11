@@ -7,6 +7,7 @@ from replit import db
 app = Flask('app')
 db['transcription_url'] = ""
 db['audio_url'] = ""
+db['response'] = ""
 
 def get_transcripts():
   api_key = os.getenv("AAI_API_KEY")
@@ -50,7 +51,12 @@ def analyze():
     endpoint = db['transcription_url']
     response = requests.get(endpoint, headers=headers)
     print(response.json())
+    db['response'] = response.json()
     return response.json()
 
+# @app.route('/report', methods = ['GET'])
+# def report():
+#   text = db['response']['text']
+#   return
 
 app.run(host='0.0.0.0', port=8080)

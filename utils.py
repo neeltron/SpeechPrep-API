@@ -27,7 +27,9 @@ def upload_file(audio_file, header):
 def request_transcript(upload_url, header):
     transcript_request = {
         'audio_url': upload_url['upload_url'],
-        "sentiment_analysis": True
+        "sentiment_analysis": True,
+        "content_safety": True,
+        "summarization": True
     }
     transcript_response = requests.post(
         transcript_endpoint,
