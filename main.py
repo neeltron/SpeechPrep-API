@@ -2,7 +2,17 @@ from flask import Flask, request
 import os
 import utils
 import requests
+import json
 from replit import db
+
+url = "https://dnaber-languagetool.p.rapidapi.com/v2/check"
+
+payload = "language=en-US&text=hi%20this%20is%20a%20test.%20the%20response."
+headers2 = {
+	"content-type": "application/x-www-form-urlencoded",
+	"X-RapidAPI-Key": "8f85d2a172msh6818abcfdc7f541p104edbjsn56569112cb59",
+	"X-RapidAPI-Host": "dnaber-languagetool.p.rapidapi.com"
+}
 
 app = Flask('app')
 db['transcription_url'] = ""
@@ -50,13 +60,37 @@ def analyze():
     }
     endpoint = db['transcription_url']
     response = requests.get(endpoint, headers=headers)
-    print(response.json())
-    db['response'] = response.json()
-    return response.json()
+    # print(response.json())
+    
+    db['response'] = response.json()['text']
+    text = str(db['response']).replace(" ", "%20")
+    # print(text)
+    payload = "language=en-US&text=" + text
+    response2 = requests.request("POST", url, data=payload, headers=headers2)
+    mistakes = json.loads(response2.text)['matches']
+    str_mistakes = ""
+    for i in range(0, len(mistakes)):
+      str_mistakes += mistakes[i]['message'] + " "
+    # print(str_mistakes)
+    print(response)
+    response = response.json()
+    wrap_mistakes = {'mistakes': str_mistakes}
+    merged_dict = {**response, **wrap_mistakes}
+    return json.dumps(merged_dict)
 
-# @app.route('/report', methods = ['GET'])
-# def report():
-#   text = db['response']['text']
-#   return
+@app.route('/report', methods = ['GET'])
+def report():
+  # text = json.loads(db['response'])['text']
+  text = str(db['response']).replace(" ", "%20")
+  print(text)
+  payload = "language=en-US&text=" + text
+  response = requests.request("POST", url, data=payload, headers=headers)
+  mistakes = json.loads(response.text)['matches']
+  str_mistakes = ""
+  for i in range(0, len(mistakes)):
+    str_mistakes += mistakes[i]['message'] + " "
+  print(str_mistakes)
+  wrap_mistakes = {'mistakes': str_mistakes}
+  return json.dumps(wrap_mistakes)
 
 app.run(host='0.0.0.0', port=8080)
