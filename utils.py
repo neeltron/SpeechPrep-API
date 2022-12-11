@@ -15,15 +15,19 @@ def _read_file(filename, chunk_size=5242880):
 
 
 def upload_file(audio_file, header):
+    json = {
+      "sentiment_analysis": True
+    }
     upload_response = requests.post(
-        upload_endpoint,
-        headers=header, data=_read_file(audio_file)
+        upload_endpoint, json=json, headers=header, data=_read_file(audio_file)
     )
+    print("Upload Response: ", upload_response)
     return upload_response.json()
 
 def request_transcript(upload_url, header):
     transcript_request = {
-        'audio_url': upload_url['upload_url']
+        'audio_url': upload_url['upload_url'],
+        "sentiment_analysis": True
     }
     transcript_response = requests.post(
         transcript_endpoint,

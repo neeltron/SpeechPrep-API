@@ -6,6 +6,7 @@ from replit import db
 
 app = Flask('app')
 db['transcription_url'] = ""
+db['audio_url'] = ""
 
 def get_transcripts():
   api_key = os.getenv("AAI_API_KEY")
@@ -19,12 +20,12 @@ def get_transcripts():
   print(transcript_response)
   polling_endpoint = utils.make_polling_endpoint(transcript_response)
   db['transcription_url'] = polling_endpoint
+  print(polling_endpoint)
   utils.wait_for_completion(polling_endpoint, header)
   paragraphs = utils.get_paragraphs(polling_endpoint, header)
-  with open('transcript.txt', 'w') as f:
-    for para in paragraphs:
-      print(para['text'] + '\n')
-      f.write(para['text'] + '\n')
+  audio_url = transcript_response['audio_url']
+  print(audio_url)
+  db['audio_url'] = audio_url
   return paragraphs
 
 @app.route('/', methods=["POST"])
@@ -34,6 +35,7 @@ def hello_world():
     if file:
       file.save("alpha.mp3")
       paragraphs = get_transcripts()
+      print(paragraphs)
       return paragraphs
     else:
       return "no file"
